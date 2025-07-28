@@ -1,9 +1,9 @@
-name: 'Lock Stale Issues'
+name: "Lock Stale Issues"
 
 on:
   schedule:
-    # 7am Pacific = 2pm UTC (3pm UTC during DST)
-    - cron: '0 14 * * *'
+    # 8am Pacific = 1pm UTC (2pm UTC during DST)
+    - cron: "0 14 * * *"
   workflow_dispatch:
 
 permissions:
@@ -16,16 +16,15 @@ jobs:
   lock-threads:
     runs-on: ubuntu-latest
     steps:
-      - uses: dessant/lock-threads@1bf7ec25051fe7c00bdd17e6a7cf3d7bfb7dc771  # v5.0.1
+      - uses: dessant/lock-threads@1bf7ec25051fe7c00bdd17e6a7cf3d7bfb7dc771 # v5.0.1
         with:
-          issue-inactive-days: '7'
-          pr-inactive-days: '36500'  # ~100 years (effectively disabled)
-          discussion-inactive-days: '36500'  # ~100 years (effectively disabled)
-          process-only: 'issues'
-          issue-lock-reason: 'resolved'
+          issue-inactive-days: "7"
+          pr-inactive-days: "36500" # ~100 years (effectively disabled)
+          discussion-inactive-days: "36500" # ~100 years (effectively disabled)
+          process-only: "issues"
           issue-comment: >
             This issue has been automatically locked since it was
             closed and has not had any activity for 7 days.
-            
+
             If you're experiencing a similar issue, please file a new issue
             and reference this one if it's relevant: #${{ github.event.issue.number }}
