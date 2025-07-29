@@ -19,12 +19,9 @@ jobs:
       - uses: dessant/lock-threads@1bf7ec25051fe7c00bdd17e6a7cf3d7bfb7dc771 # v5.0.1
         with:
           issue-inactive-days: "7"
-          pr-inactive-days: "36500" # ~100 years (effectively disabled)
-          discussion-inactive-days: "36500" # ~100 years (effectively disabled)
           process-only: "issues"
           issue-comment: >
             This issue has been automatically locked since it was
             closed and has not had any activity for 7 days.
-
             If you're experiencing a similar issue, please file a new issue
-            and reference this one if it's relevant: #${{ github.event.issue.number }}
+            and reference this one if it's relevant.
