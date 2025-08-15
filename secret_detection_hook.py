@@ -101,8 +101,8 @@ def analyze_tool_call(tool_call: Dict[str, Any]) -> List[Tuple[str, str]]:
     """Analyze tool call for secrets"""
     detected_secrets = []
     
-    tool_name = tool_call.get("tool", "")
-    tool_input = tool_call.get("input", {})
+    tool_name = tool_call.get("tool_name", "")
+    tool_input = tool_call.get("tool_input", {})
     
     # Check different input fields based on tool type
     text_to_check = []
@@ -150,8 +150,8 @@ def main():
         detected_secrets = analyze_tool_call(tool_call)
         
         if detected_secrets:
-            tool_name = tool_call.get("tool", "unknown")
-            command = str(tool_call.get("input", {}))
+            tool_name = tool_call.get("tool_name", "unknown")
+            command = str(tool_call.get("tool_input", {}))
             
             # Log the detection
             log_detection(detected_secrets, command, tool_name)

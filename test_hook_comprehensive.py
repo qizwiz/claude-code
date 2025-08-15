@@ -27,9 +27,9 @@ def run_hook_test(tool_call_json):
 def test_openai_api_key():
     """Test OpenAI API key detection"""
     tool_call = {
-        "tool": "Bash",
-        "input": {
-            "command": "curl -H 'Authorization: Bearer sk-test123456789012345678901234567890123456789' api.openai.com"
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": "curl -H 'Authorization: Bearer sk-1234567890abcdef1234567890abcdef1234567890' api.openai.com"
         }
     }
     
@@ -37,14 +37,14 @@ def test_openai_api_key():
     
     assert exit_code == 2, f"Expected exit code 2, got {exit_code}"
     assert "OPENAI_API_KEY" in stderr, "Should detect OpenAI API key"
-    assert "sk-test123..." in stderr, "Should show truncated key"
+    assert "sk-1234567..." in stderr, "Should show truncated key"
     print("✅ OpenAI API key detection: PASS")
 
 def test_anthropic_api_key():
     """Test Anthropic API key detection"""
     tool_call = {
-        "tool": "Bash", 
-        "input": {
+        "tool_name": "Bash", 
+        "tool_input": {
             "command": "export ANTHROPIC_API_KEY=sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqr-stuvwxyzABC"
         }
     }
@@ -58,8 +58,8 @@ def test_anthropic_api_key():
 def test_github_token():
     """Test GitHub token detection"""
     tool_call = {
-        "tool": "Bash",
-        "input": {
+        "tool_name": "Bash",
+        "tool_input": {
             "command": "git clone https://ghp_abcdefghijklmnopqrstuvwxyz0123456789@github.com/user/repo.git"
         }
     }
@@ -73,8 +73,8 @@ def test_github_token():
 def test_database_url():
     """Test database URL detection"""
     tool_call = {
-        "tool": "Bash",
-        "input": {
+        "tool_name": "Bash",
+        "tool_input": {
             "command": "psql postgres://user:secret_password@localhost:5432/production_db"
         }
     }
@@ -88,8 +88,8 @@ def test_database_url():
 def test_aws_credentials():
     """Test AWS credentials detection"""
     tool_call = {
-        "tool": "Bash",
-        "input": {
+        "tool_name": "Bash",
+        "tool_input": {
             "command": "aws s3 ls --access-key AKIAIOSFODNN7EXAMPLE --secret-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
         }
     }
@@ -103,8 +103,8 @@ def test_aws_credentials():
 def test_environment_variables():
     """Test sensitive environment variable detection"""
     tool_call = {
-        "tool": "Bash",
-        "input": {
+        "tool_name": "Bash",
+        "tool_input": {
             "command": "echo $API_KEY $DATABASE_PASSWORD $SECRET_TOKEN"
         }
     }
@@ -118,8 +118,8 @@ def test_environment_variables():
 def test_jwt_token():
     """Test JWT token detection"""
     tool_call = {
-        "tool": "Bash",
-        "input": {
+        "tool_name": "Bash",
+        "tool_input": {
             "command": "curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c' api.example.com"
         }
     }
@@ -142,8 +142,8 @@ def test_safe_commands():
     
     for command in safe_commands:
         tool_call = {
-            "tool": "Bash",
-            "input": {"command": command}
+            "tool_name": "Bash",
+            "tool_input": {"command": command}
         }
         
         exit_code, stdout, stderr = run_hook_test(json.dumps(tool_call))
@@ -154,8 +154,8 @@ def test_safe_commands():
 def test_read_tool_sensitive_files():
     """Test Read tool with sensitive file detection"""
     tool_call = {
-        "tool": "Read",
-        "input": {
+        "tool_name": "Read",
+        "tool_input": {
             "file_path": "/path/to/.env"
         }
     }
@@ -169,10 +169,10 @@ def test_read_tool_sensitive_files():
 def test_write_tool_with_secrets():
     """Test Write tool with secret content"""
     tool_call = {
-        "tool": "Write",
-        "input": {
+        "tool_name": "Write",
+        "tool_input": {
             "file_path": "/tmp/config.py",
-            "content": "API_KEY = 'sk-test123456789012345678901234567890123456789'\nDATABASE_URL = 'postgres://user:pass@host/db'"
+            "content": "API_KEY = 'sk-1234567890abcdef1234567890abcdef1234567890'\nDATABASE_URL = 'postgres://user:pass@host/db'"
         }
     }
     
@@ -205,8 +205,8 @@ def test_audit_logging():
     
     # Run a test that should be logged
     tool_call = {
-        "tool": "Bash",
-        "input": {"command": "echo $SECRET_KEY"}
+        "tool_name": "Bash",
+        "tool_input": {"command": "echo $SECRET_KEY"}
     }
     
     exit_code, stdout, stderr = run_hook_test(json.dumps(tool_call))
