@@ -133,7 +133,7 @@ class ZeroTrustEnvironmentAccountability:
         # Create validation proof (recursive accountability)
         validation_context = {
             'variable_name': var_name,
-            'timestamp': datetime.datetime.utcnow().isoformat(),
+            'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat(),
             'session_id': self.session_id,
             'tool_context': tool_context
         }
@@ -145,7 +145,7 @@ class ZeroTrustEnvironmentAccountability:
             commitment_id=commitment_id,
             original_hash=original_hash,
             masked_value=masked_value,
-            timestamp=datetime.datetime.utcnow().isoformat(),
+            timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
             context=validation_context,
             validation_proof=validation_proof
         )
@@ -202,7 +202,7 @@ class ZeroTrustEnvironmentAccountability:
                             
                             # Create audit entry
                             audit_entry = EnvironmentAccessAuditEntry(
-                                timestamp=datetime.datetime.utcnow().isoformat(),
+                                timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                                 variable_name=var_name,
                                 access_type='masked',
                                 commitment=commitment,
@@ -235,7 +235,7 @@ class ZeroTrustEnvironmentAccountability:
                         
                         # Create audit entry
                         audit_entry = EnvironmentAccessAuditEntry(
-                            timestamp=datetime.datetime.utcnow().isoformat(),
+                            timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                             variable_name=f"embedded_in_{param_name}",
                             access_type='embedded_secret_masked',
                             commitment=commitment,
@@ -306,7 +306,7 @@ class ZeroTrustEnvironmentAccountability:
 
 
 def main():
-    """Main hook execution function."""
+    """Main hook execution function following Claude Code hook specification."""
     try:
         input_data = json.load(sys.stdin)
     except json.JSONDecodeError as e:
@@ -321,24 +321,97 @@ def main():
     
     # Process tool input for environment variable security
     try:
-        modified_input = accountability.process_tool_input(tool_input, tool_name)
+        secrets_detected = []
         
-        # If modifications were made, output the modified input
-        if modified_input != tool_input:
-            # Return modified tool input to Claude Code
-            output = {
-                "tool_input": modified_input,
-                "metadata": {
-                    "zero_trust_applied": True,
-                    "session_id": accountability.session_id,
-                    "audit_file": str(accountability.audit_file)
-                }
-            }
-            print(json.dumps(output))
+        # Check for environment variables in bash commands
+        if tool_name == "Bash":
+            command = tool_input.get("command", "")
+            if command:
+                # Find environment variable references
+                env_refs = re.findall(r'\$([A-Za-z_][A-Za-z0-9_]*)', command)
+                for var_name in env_refs:
+                    actual_value = os.environ.get(var_name, '')
+                    if actual_value:
+                        # Check if this contains secrets
+                        secrets_in_var = accountability.detect_secrets_in_value(actual_value)
+                        is_sensitive = accountability.is_sensitive_env_var(var_name)
+                        
+                        if secrets_in_var or is_sensitive:
+                            # Create cryptographic commitment
+                            commitment = accountability.create_cryptographic_commitment(
+                                var_name, actual_value, {
+                                    'tool_name': tool_name,
+                                    'command': command[:100] + '...' if len(command) > 100 else command
+                                }
+                            )
+                            
+                            # Create audit entry
+                            audit_entry = EnvironmentAccessAuditEntry(
+                                timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                                variable_name=var_name,
+                                access_type='environment_variable_detected',
+                                commitment=commitment,
+                                tool_context={
+                                    'tool_name': tool_name,
+                                    'session_id': accountability.session_id
+                                },
+                                integrity_hash=''
+                            )
+                            
+                            accountability.audit_environment_access(audit_entry)
+                            secrets_detected.append(f"Environment variable {var_name} contains secrets")
+        
+        # Check for embedded secrets in any tool input
+        for param_name, param_value in tool_input.items():
+            if isinstance(param_value, str):
+                secrets_in_param = accountability.detect_secrets_in_value(param_value)
+                if secrets_in_param:
+                    # Create commitment for embedded secret
+                    commitment = accountability.create_cryptographic_commitment(
+                        f"embedded_in_{param_name}", param_value, {
+                            'tool_name': tool_name,
+                            'parameter': param_name
+                        }
+                    )
+                    
+                    # Create audit entry
+                    audit_entry = EnvironmentAccessAuditEntry(
+                        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        variable_name=f"embedded_in_{param_name}",
+                        access_type='embedded_secret_detected',
+                        commitment=commitment,
+                        tool_context={
+                            'tool_name': tool_name,
+                            'parameter': param_name,
+                            'session_id': accountability.session_id
+                        },
+                        integrity_hash=''
+                    )
+                    
+                    accountability.audit_environment_access(audit_entry)
+                    secrets_detected.append(f"Parameter {param_name} contains embedded secrets")
+        
+        # If secrets were detected, block execution and warn user
+        if secrets_detected:
+            print("🔒 ZERO-TRUST SECURITY ALERT: Secrets detected in tool usage", file=sys.stderr)
+            print("", file=sys.stderr)
+            for detection in secrets_detected:
+                print(f"  • {detection}", file=sys.stderr)
+            print("", file=sys.stderr)
+            print("Zero-trust policy prevents transmission of secrets to AI systems.", file=sys.stderr)
+            print(f"Audit trail created: {accountability.audit_file}", file=sys.stderr)
+            print("", file=sys.stderr)
+            print("To proceed safely:", file=sys.stderr)
+            print("  1. Remove sensitive values from commands", file=sys.stderr)
+            print("  2. Use placeholder values for demonstration", file=sys.stderr)
+            print("  3. Configure secrets through secure channels", file=sys.stderr)
+            
+            # Exit code 2 blocks the tool call and shows stderr to Claude
+            sys.exit(2)
             
     except Exception as e:
         print(f"Error in zero-trust processing: {e}", file=sys.stderr)
-        # Don't block execution on errors, but log them
+        # Don't block execution on processing errors
         sys.exit(0)
 
 
