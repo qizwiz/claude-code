@@ -40,7 +40,7 @@ jobs:
       - name: Test security hook with Anthropic key (should block)
         run: |
           set +e
-          echo '{"tool_name": "Bash", "tool_input": {"command": "curl -H \"x-api-key: sk-ant-api03-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456\"}}' | python3 examples/hooks/security_demo.py
+          echo '{"tool_name": "Bash", "tool_input": {"command": "export ANTHROPIC_API_KEY=sk-ant-api03-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456"}}' | python3 examples/hooks/security_demo.py
           exit_code=$?
           echo "Exit code: $exit_code"
           if [ $exit_code -eq 2 ]; then
