@@ -12,7 +12,23 @@ const fs = require('fs');
 
 const MCP_PROTOCOL_VERSION = '2024-11-05';
 
-// Detect MCP servers from config files
+/**
+ * Scan known Claude config files and return MCP server identifiers found within them.
+ *
+ * Looks for configs at:
+ * - $HOME/.claude/.mcp.json
+ * - $HOME/.claude/settings.json
+ * - $CWD/.mcp.json
+ *
+ * The function reads each file (if present and valid JSON) and collects:
+ * - keys of `mcpServers` (object)
+ * - values from `enabledMcpjsonServers` (array)
+ *
+ * Files that are missing or invalid JSON are silently ignored. The returned
+ * array may contain duplicate entries if the same server appears in multiple files.
+ *
+ * @return {string[]} An array of detected MCP server identifiers (may be empty).
+ */
 function detectMcpServers() {
     const configs = [
         `${process.env.HOME}/.claude/.mcp.json`,
