@@ -60,32 +60,39 @@ require('child_process').spawn = function(command, args, options) {
             let modifiedData = data;
             
             try {
-                const message = JSON.parse(data.toString());
-                
-                if (message.method === 'initialize') {
-                    if (!message.params) {
-                        message.params = {};
-                    }
-                    
+            try {
+                const str = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
+                const clMatch = str.match(/^Content-Length:\s*(\d+)\r?\n\r?\n/);
+                const parseAndPatch = (body) => {
+                  const message = JSON.parse(body);
+                  if (message.method === 'initialize') {
+                    message.params ||= {};
                     if (!message.params.protocolVersion) {
-                        message.params.protocolVersion = '${MCP_PROTOCOL_VERSION}';
-                        console.error('🔧 [MCP-FIX] Added missing protocolVersion');
+                      message.params.protocolVersion = '${MCP_PROTOCOL_VERSION}';
+                      console.error('🔧 [MCP-FIX] Added missing protocolVersion');
                     }
-                    
                     if (!message.params.clientInfo) {
-                        message.params.clientInfo = {
-                            name: 'claude-code-fixed',
-                            version: '1.0.x-mcp-patched'
-                        };
+                      message.params.clientInfo = { name: 'claude-code-fixed', version: '1.0.x-mcp-patched' };
                     }
-                    
-                    if (!message.params.capabilities) {
-                        message.params.capabilities = {};
-                    }
-                    
-                    modifiedData = JSON.stringify(message) + '\\n';
+                    message.params.capabilities ||= {};
+                  }
+                  return message;
+                };
+
+                if (clMatch) {
+                  const [, ] = clMatch;
+                  const body = str.split(/\r?\n\r?\n/)[1] ?? '';
+                  const patched = parseAndPatch(body);
+                  const newBody = JSON.stringify(patched);
+                  const newHeader = 'Content-Length: ' + Buffer.byteLength(newBody, 'utf8') + '\\r\\n\\r\\n';
+                  modifiedData = newHeader + newBody;
+                } else {
+                  const patched = parseAndPatch(str.trim());
+                  modifiedData = JSON.stringify(patched) + '\\n';
                 }
             } catch (e) {
+                // Not JSON - pass through unchanged
+            }
                 // Not JSON - pass through unchanged
             }
             
