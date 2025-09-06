@@ -1,6 +1,6 @@
 # Claude Code MCP Protocol Fix
 
-This repository contains a comprehensive fix for the Claude Code MCP (Model Context Protocol) `protocolVersion` validation bug that causes "2 failing MCP servers" messages.
+Fix for Claude Code MCP (Model Context Protocol) `protocolVersion` validation bug that causes "2 failing MCP servers" messages.
 
 ## 🚨 Bug Description
 
@@ -17,11 +17,11 @@ Claude Code v1.0.83 and earlier versions omit the required `protocolVersion` par
 - `mcp-fix-v2.js` - Main wrapper script that intercepts and patches MCP requests
 - `test-json-patching.js` - Unit tests for JSON-RPC message patching logic
 - `test_mcp_server.py` - Test MCP server that validates protocolVersion presence
-- `prove-fix-works.sh` - Comprehensive testing script
+- `prove-fix-works.sh` - Testing script
 
 ### CI/CD Testing
 - `.github/workflows/test-mcp-fix.yml` - Primary CI workflow
-- `.github/workflows/mcp-fix-integration-test.yml` - Comprehensive integration testing
+- `.github/workflows/mcp-fix-integration-test.yml` - Integration testing
 
 ## 🧪 How It Works
 
@@ -57,7 +57,7 @@ node mcp-fix-v2.js --mcp-config your-config.json --mcp-debug
 
 ### Testing the Fix
 ```bash
-# Run comprehensive test
+# Run test script
 ./prove-fix-works.sh
 
 # Test JSON-RPC patching logic
@@ -80,7 +80,7 @@ The GitHub Actions workflows automatically:
 ### Test Results Format
 ```
 ✅ Original Claude Code bug confirmed - missing protocolVersion detected
-🔧 Fix confirmed - protocolVersion successfully injected  
+🔧 Fix working - protocolVersion injected  
 ✅ Wrapper injection confirmed - [MCP-FIX] messages present
 ```
 
