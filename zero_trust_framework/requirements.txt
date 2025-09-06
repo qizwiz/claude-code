@@ -1,0 +1,23 @@
+# Zero-Trust Security Framework Requirements
+
+# Core dependencies
+# (This framework is designed to have minimal dependencies)
+
+# Development dependencies
+pytest>=6.2.5
+pytest-cov>=3.0.0
+pytest-asyncio>=0.16.0
+coverage>=6.2
+black>=21.12b0
+flake8>=4.0.1
+
+# For verification engine (optional)
+# coq>=8.15.0  # Install via system package manager
+
+# Documentation
+sphinx>=4.3.2
+sphinx-rtd-theme>=1.0.0
+
+# Type hints
+mypy>=0.931
+types-setuptools>=57.4.18

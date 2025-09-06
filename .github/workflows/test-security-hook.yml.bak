@@ -1,0 +1,53 @@
+name: Test Security Hook
+
+on:
+  push:
+    branches: [ main, client-side-secret-detection-2695 ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-security-hook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Test security hook with safe command
+        run: |
+          echo '{"tool_name": "Bash", "tool_input": {"command": "echo hello"}}' | python3 examples/hooks/security_demo.py
+          echo "Exit code: $?"
+          
+      - name: Test security hook with API key (should block)
+        run: |
+          set +e
+          echo '{"tool_name": "Bash", "tool_input": {"command": "export OPENAI_API_KEY=sk-1234567890abcdef1234567890abcdef1234567890"}}' | python3 examples/hooks/security_demo.py
+          exit_code=$?
+          echo "Exit code: $exit_code"
+          if [ $exit_code -eq 2 ]; then
+            echo "✅ Security hook correctly blocked API key"
+          else
+            echo "❌ Security hook failed to block API key"
+            exit 1
+          fi
+          
+      - name: Test security hook with Anthropic key (should block)
+        run: |
+          set +e
+          cat << 'EOF' | python3 examples/hooks/security_demo.py
+          {"tool_name": "Bash", "tool_input": {"command": "export ANTHROPIC_API_KEY=sk-ant-api03-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456789012345"}}
+          EOF
+          exit_code=$?
+          echo "Exit code: $exit_code"
+          if [ $exit_code -eq 2 ]; then
+            echo "✅ Security hook correctly blocked Anthropic key"
+          else
+            echo "❌ Security hook failed to block Anthropic key"
+            exit 1
+          fi

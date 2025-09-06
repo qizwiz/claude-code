@@ -1,0 +1,382 @@
+name: MCP Fix Integration Test
+
+on:
+  push:
+    paths:
+      - 'mcp-fix-v2.js'
+      - 'test-json-patching.js'
+      - 'test_mcp_server.py'
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install Bun
+      run: |
+        curl -fsSL https://bun.sh/install | bash
+        echo "$HOME/.bun/bin" >> $GITHUB_PATH
+        source ~/.bashrc || true
+        
+    - name: Install Claude Code
+      run: |
+        bun install -g @anthropic-ai/claude-code@latest
+        
+    - name: Prepare CI-compatible MCP fix
+      run: |
+        # Create CI version of the fix that uses system claude
+        cat > mcp-fix-ci.js << 'EOF'
+        #!/usr/bin/env node
+        
+        /**
+         * Claude Code MCP Protocol Version Fix - CI Version
+         * Adapted for GitHub Actions environment
+         */
+        
+        const { spawn, execSync } = require('child_process');
+        const fs = require('fs');
+        const path = require('path');
+        
+        const CLAUDE_BINARY = 'claude';  // Use system claude
+        const MCP_PROTOCOL_VERSION = '2024-11-05';
+        
+        function detectMcpServers() {
+            const configs = [
+                './test-mcp-config.json',
+                './.mcp.json'
+            ];
+            
+            let servers = [];
+            for (const configPath of configs) {
+                try {
+                    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                    if (config.mcpServers) {
+                        servers.push(...Object.keys(config.mcpServers));
+                    }
+                } catch (e) {
+                    // Config doesn't exist
+                }
+            }
+            
+            return servers;
+        }
+        
+        console.log('🔧 Claude Code MCP Protocol Fix - CI Version');
+        console.log(`✅ Protocol Version Target: ${MCP_PROTOCOL_VERSION}`);
+        
+        const servers = detectMcpServers();
+        if (servers.length > 0) {
+            console.log(`🔍 Detected MCP servers: ${servers.join(', ')}`);
+            console.log('🚀 Starting Claude Code with MCP protocol injection...');
+        } else {
+            console.log('ℹ️  No MCP servers detected - launching normal Claude Code');
+        }
+        
+        const wrapperCode = `
+        const originalSpawn = require('child_process').spawn;
+        
+        require('child_process').spawn = function(command, args, options) {
+            const child = originalSpawn.apply(this, arguments);
+            
+            if (options && options.stdio && child.stdin && child.stdout) {
+                const originalWrite = child.stdin.write;
+                let hasLoggedFix = false;
+                
+                child.stdin.write = function(data, encoding, callback) {
+                    let modifiedData = data;
+                    
+                    try {
+                        const message = JSON.parse(data.toString());
+                        
+                        if (message.method === 'initialize') {
+                            if (!hasLoggedFix) {
+                                console.error('🔧 [MCP-FIX] Intercepted MCP initialize request');
+                                hasLoggedFix = true;
+                            }
+                            
+                            if (!message.params) {
+                                message.params = {};
+                            }
+                            
+                            if (!message.params.protocolVersion) {
+                                message.params.protocolVersion = '${MCP_PROTOCOL_VERSION}';
+                                console.error('🔧 [MCP-FIX] Added missing protocolVersion: ${MCP_PROTOCOL_VERSION}');
+                            }
+                            
+                            if (!message.params.clientInfo) {
+                                message.params.clientInfo = {
+                                    name: 'claude-code-fixed',
+                                    version: '1.0.83-mcp-patched'
+                                };
+                            }
+                            
+                            if (!message.params.capabilities) {
+                                message.params.capabilities = {};
+                            }
+                            
+                            modifiedData = JSON.stringify(message) + '\\n';
+                        }
+                    } catch (e) {
+                        // Not JSON - pass through
+                    }
+                    
+                    return originalWrite.call(this, modifiedData, encoding, callback);
+                };
+            }
+            
+            return child;
+        };
+        `;
+        
+        const wrapperPath = '/tmp/claude-mcp-wrapper-ci.js';
+        fs.writeFileSync(wrapperPath, wrapperCode);
+        
+        const env = { ...process.env };
+        env.NODE_OPTIONS = \`--require=\${wrapperPath} \${env.NODE_OPTIONS || ''}\`;
+        
+        try {
+            const result = execSync(\`\${CLAUDE_BINARY} \${process.argv.slice(2).join(' ')}\`, {
+                stdio: 'inherit',
+                env: env,
+                encoding: 'utf8'
+            });
+        } catch (error) {
+            process.exit(error.status || 1);
+        } finally {
+            try {
+                fs.unlinkSync(wrapperPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+        EOF
+        
+        chmod +x mcp-fix-ci.js
+        
+    - name: Create comprehensive test MCP server
+      run: |
+        cat > ci-test-mcp-server.py << 'EOF'
+        #!/usr/bin/env python3
+        """Comprehensive CI test MCP server"""
+        import json
+        import sys
+        import os
+        import time
+        
+        def log_message(msg):
+            print(f"[CI-MCP-SERVER] {msg}", file=sys.stderr)
+        
+        def test_protocol_version(params):
+            """Test protocolVersion parameter"""
+            log_message(f"Received initialize params: {params}")
+            
+            protocol_version = params.get('protocolVersion')
+            client_info = params.get('clientInfo', {})
+            capabilities = params.get('capabilities', {})
+            
+            # Record test results
+            test_results = {
+                'has_protocol_version': bool(protocol_version),
+                'protocol_version_value': protocol_version,
+                'has_client_info': bool(client_info),
+                'client_name': client_info.get('name'),
+                'has_capabilities': bool(capabilities)
+            }
+            
+            log_message(f"Test results: {test_results}")
+            
+            if not protocol_version:
+                log_message("❌ FAIL: Missing protocolVersion parameter")
+                return {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "error": {
+                        "code": -32602,
+                        "message": "Missing required protocolVersion parameter",
+                        "data": test_results
+                    }
+                }
+            
+            log_message(f"✅ PASS: Found protocolVersion: {protocol_version}")
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {},
+                        "resources": {},
+                        "prompts": {}
+                    },
+                    "serverInfo": {
+                        "name": "ci-test-mcp-server",
+                        "version": "1.0.0"
+                    },
+                    "testResults": test_results
+                }
+            }
+        
+        def main():
+            log_message("Starting CI test MCP server")
+            
+            try:
+                for line in sys.stdin:
+                    line = line.strip()
+                    if not line:
+                        continue
+                        
+                    try:
+                        request = json.loads(line)
+                        log_message(f"Received request: {request}")
+                        
+                        if request.get("method") == "initialize":
+                            response = test_protocol_version(request.get("params", {}))
+                            print(json.dumps(response))
+                            sys.stdout.flush()
+                            
+                            # Log final status for CI
+                            if "error" in response:
+                                log_message("🚨 CI RESULT: ORIGINAL CLAUDE CODE BUG DETECTED")
+                                print("::error::Original Claude Code missing protocolVersion")
+                            else:
+                                log_message("🎉 CI RESULT: FIX SUCCESSFUL - PROTOCOLVERSION PRESENT")
+                                print("::notice::Fixed Claude Code has protocolVersion")
+                            
+                            time.sleep(1)  # Allow processing
+                            break
+                            
+                    except json.JSONDecodeError as e:
+                        log_message(f"JSON decode error: {e}")
+                        continue
+                        
+            except KeyboardInterrupt:
+                log_message("Interrupted")
+            except Exception as e:
+                log_message(f"Error: {e}")
+                
+        if __name__ == "__main__":
+            main()
+        EOF
+        
+        chmod +x ci-test-mcp-server.py
+        
+    - name: Create test configuration
+      run: |
+        cat > test-mcp-config.json << 'EOF'
+        {
+          "mcpServers": {
+            "ci-protocol-tester": {
+              "command": "python3",
+              "args": ["./ci-test-mcp-server.py"],
+              "env": {}
+            }
+          }
+        }
+        EOF
+        
+    - name: Test core JSON patching logic
+      run: |
+        echo "🧪 Testing JSON-RPC patching logic"
+        node test-json-patching.js
+        
+    - name: Test original Claude Code behavior
+      id: test-original
+      continue-on-error: true
+      run: |
+        echo "🔍 Testing original Claude Code (expect protocolVersion missing)"
+        timeout 45s claude --mcp-config test-mcp-config.json --mcp-debug --version 2>&1 | tee original-test.log || true
+        
+        # Analyze results
+        if grep -q "❌ FAIL: Missing protocolVersion" original-test.log; then
+          echo "original_bug_found=true" >> $GITHUB_OUTPUT
+          echo "✅ Original bug confirmed: protocolVersion missing"
+        elif grep -q "✅ PASS: Found protocolVersion" original-test.log; then
+          echo "original_bug_found=false" >> $GITHUB_OUTPUT
+          echo "⚠️  Original Claude Code already has protocolVersion (may be patched)"
+        else
+          echo "original_bug_found=inconclusive" >> $GITHUB_OUTPUT
+          echo "❓ Could not determine original Claude Code behavior"
+        fi
+        
+    - name: Test fixed Claude Code behavior
+      run: |
+        echo "🔧 Testing fixed Claude Code (expect protocolVersion present)"
+        timeout 45s node mcp-fix-ci.js --mcp-config test-mcp-config.json --mcp-debug --version 2>&1 | tee fixed-test.log
+        
+        # Verify fix worked
+        if grep -q "✅ PASS: Found protocolVersion" fixed-test.log; then
+          echo "✅ Fix successful: protocolVersion injected"
+        else
+          echo "❌ Fix failed: protocolVersion still missing"
+          cat fixed-test.log
+          exit 1
+        fi
+        
+        # Verify wrapper injection occurred
+        if grep -q "\[MCP-FIX\]" fixed-test.log; then
+          echo "✅ Wrapper injection confirmed"
+        else
+          echo "⚠️  No wrapper injection messages found"
+        fi
+        
+    - name: Compare test outputs
+      run: |
+        echo "## 📊 Test Comparison Results" >> comparison-results.md
+        echo "" >> comparison-results.md
+        
+        echo "### Original Claude Code" >> comparison-results.md
+        if [ "${{ steps.test-original.outputs.original_bug_found }}" = "true" ]; then
+          echo "❌ **Bug confirmed**: Missing protocolVersion parameter" >> comparison-results.md
+        elif [ "${{ steps.test-original.outputs.original_bug_found }}" = "false" ]; then
+          echo "✅ **No bug**: protocolVersion already present (may be patched upstream)" >> comparison-results.md
+        else
+          echo "❓ **Inconclusive**: Could not determine behavior" >> comparison-results.md
+        fi
+        echo "" >> comparison-results.md
+        
+        echo "### Fixed Claude Code" >> comparison-results.md
+        if grep -q "✅ PASS: Found protocolVersion" fixed-test.log; then
+          echo "✅ **Fix working**: protocolVersion successfully injected" >> comparison-results.md
+        else
+          echo "❌ **Fix failed**: protocolVersion still missing" >> comparison-results.md
+        fi
+        echo "" >> comparison-results.md
+        
+        echo "### GitHub Issues Addressed" >> comparison-results.md
+        echo "This fix resolves the following Claude Code issues:" >> comparison-results.md
+        echo "- [#1611 - MCP servers failing to initialize](https://github.com/anthropics/claude-code/issues/1611)" >> comparison-results.md
+        echo "- [#768 - Protocol version validation errors](https://github.com/anthropics/claude-code/issues/768)" >> comparison-results.md
+        echo "- [#4793 - MCP initialization failures](https://github.com/anthropics/claude-code/issues/4793)" >> comparison-results.md
+        
+        cat comparison-results.md >> $GITHUB_STEP_SUMMARY
+        
+    - name: Upload comprehensive test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: mcp-fix-test-results-node${{ matrix.node-version }}
+        path: |
+          original-test.log
+          fixed-test.log
+          comparison-results.md
+          ci-test-mcp-server.py
+          test-mcp-config.json
+          mcp-fix-ci.js

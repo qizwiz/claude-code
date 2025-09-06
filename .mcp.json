@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "provenance-verifier": {
+      "command": "/Users/jonathanhill/src/claude-code/provenance_env/bin/python",
+      "args": ["provenance_mcp_server.py"]
+    }
+  }
+}

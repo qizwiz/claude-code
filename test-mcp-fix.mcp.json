@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/jonathanhill/src"],
+      "env": {}
+    },
+    "simple-test": {
+      "command": "python3",
+      "args": ["/Users/jonathanhill/src/claude-code/simple_provenance_server.py"],
+      "env": {}
+    }
+  }
+}

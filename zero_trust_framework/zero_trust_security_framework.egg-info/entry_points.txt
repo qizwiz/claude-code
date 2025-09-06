@@ -1,0 +1,3 @@
+[console_scripts]
+zero-trust-hook = zero_trust_framework.hooks:main
+zero-trust-verify = zero_trust_framework.verification:demo_verification

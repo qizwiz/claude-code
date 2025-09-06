@@ -1,0 +1,145 @@
+DIGEST ba8664a283a75d41eef2387bbad0a26c
+Fprovenance_extraction
+R64:67 Stdlib.Bool.Bool <> <> lib
+R69:74 Stdlib.Strings.String <> <> lib
+R76:79 Stdlib.Lists.List <> <> lib
+R127:136 Stdlib.extraction.Extraction <> <> lib
+R146:158 Stdlib.Lists.List ListNotations <> mod
+def 205:209 <> Claim
+R220:225 Stdlib.Strings.String <> string ind
+def 239:246 <> Evidence
+R257:262 Stdlib.Strings.String <> string ind
+def 276:285 <> Confidence
+R296:298 Corelib.Init.Datatypes <> nat ind
+rec 331:344 <> EvidenceRecord
+proj 370:376 <> content
+proj 392:401 <> source_url
+proj 415:422 <> verified
+proj 434:442 <> timestamp
+R380:387 provenance_extraction <> Evidence def
+R405:410 Stdlib.Strings.String <> string ind
+R426:429 Corelib.Init.Datatypes <> bool ind
+R446:448 Corelib.Init.Datatypes <> nat ind
+def 488:502 <> ProvenanceChain
+R513:516 Corelib.Init.Datatypes <> list ind
+R518:531 provenance_extraction <> EvidenceRecord rec
+rec 569:574 <> Config
+proj 598:617 <> confidence_threshold
+proj 635:654 <> require_verification
+R621:630 provenance_extraction <> Confidence def
+R658:661 Corelib.Init.Datatypes <> bool ind
+def 745:754 <> EvidenceDB
+R770:773 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R765:769 provenance_extraction <> Claim def
+R774:788 provenance_extraction <> ProvenanceChain def
+def 832:843 <> all_verified
+R854:868 provenance_extraction <> ProvenanceChain def
+binder 846:850 <> chain:9
+R873:876 Corelib.Init.Datatypes <> bool ind
+R883:889 Stdlib.Lists.List <> forallb def
+R913:917 provenance_extraction <> chain:9 var
+binder 896:896 <> e:10
+R901:908 provenance_extraction <> verified proj
+R910:910 provenance_extraction <> e:10 var
+def 932:943 <> has_evidence
+R954:968 provenance_extraction <> ProvenanceChain def
+binder 946:950 <> chain:11
+R973:976 Corelib.Init.Datatypes <> bool ind
+R989:993 provenance_extraction <> chain:11 var
+R1004:1005 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1010:1014 Corelib.Init.Datatypes <> false constr
+R1025:1028 Corelib.Init.Datatypes <> true constr
+def 1049:1063 <> calc_confidence
+R1074:1088 provenance_extraction <> ProvenanceChain def
+binder 1066:1070 <> chain:13
+R1093:1102 provenance_extraction <> Confidence def
+R1131:1136 Stdlib.Lists.List <> length abbrev
+R1139:1144 Stdlib.Lists.List <> filter def
+R1168:1172 provenance_extraction <> chain:13 var
+binder 1151:1151 <> e:14
+R1156:1163 provenance_extraction <> verified proj
+R1165:1165 provenance_extraction <> e:14 var
+binder 1113:1126 <> verified_count:15
+R1199:1204 Stdlib.Lists.List <> length abbrev
+R1206:1210 provenance_extraction <> chain:13 var
+binder 1184:1194 <> total_count:16
+R1220:1226 Corelib.Init.Nat <> eqb def
+R1228:1238 provenance_extraction <> total_count:16 var
+R1257:1263 Corelib.Init.Nat <> div def
+R1280:1282 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R1266:1279 provenance_extraction <> verified_count:15 var
+R1288:1298 provenance_extraction <> total_count:16 var
+def 1346:1357 <> verify_claim
+R1369:1374 provenance_extraction <> Config rec
+binder 1360:1365 <> config:17
+R1392:1401 provenance_extraction <> EvidenceDB def
+binder 1378:1388 <> evidence_db:18
+R1413:1417 provenance_extraction <> Claim def
+binder 1405:1409 <> claim:19
+R1422:1425 Corelib.Init.Datatypes <> bool ind
+R1445:1455 provenance_extraction <> evidence_db:18 var
+R1457:1461 provenance_extraction <> claim:19 var
+binder 1436:1440 <> chain:20
+R1482:1493 provenance_extraction <> has_evidence def
+R1495:1499 provenance_extraction <> chain:20 var
+binder 1472:1477 <> has_ev:21
+R1521:1532 provenance_extraction <> all_verified def
+R1534:1538 provenance_extraction <> chain:20 var
+binder 1510:1516 <> all_ver:22
+R1557:1571 provenance_extraction <> calc_confidence def
+R1573:1577 provenance_extraction <> chain:20 var
+binder 1549:1552 <> conf:23
+R1607:1613 Corelib.Init.Nat <> leb def
+R1616:1635 provenance_extraction <> confidence_threshold proj
+R1637:1642 provenance_extraction <> config:17 var
+R1645:1648 provenance_extraction <> conf:23 var
+binder 1588:1602 <> meets_threshold:24
+R1658:1661 Corelib.Init.Datatypes <> andb def
+R1671:1674 Corelib.Init.Datatypes <> andb def
+R1684:1698 provenance_extraction <> meets_threshold:24 var
+R1676:1682 provenance_extraction <> all_ver:22 var
+R1663:1668 provenance_extraction <> has_ev:21 var
+def 1774:1788 <> lookup_evidence
+R1799:1803 provenance_extraction <> Claim def
+binder 1791:1795 <> claim:25
+R1808:1822 provenance_extraction <> ProvenanceChain def
+R1835:1839 provenance_extraction <> claim:25 var
+R1895:1895 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R2066:2066 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1896:1905 provenance_extraction <> mkEvidence constr
+R2039:2042 Corelib.Init.Datatypes <> true constr
+R2077:2078 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+def 2135:2145 <> check_claim
+R2156:2160 provenance_extraction <> Claim def
+binder 2148:2152 <> claim:27
+R2169:2171 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R2165:2168 Corelib.Init.Datatypes <> bool ind
+R2172:2177 Stdlib.Strings.String <> string ind
+R2198:2205 provenance_extraction <> mkConfig constr
+R2210:2213 Corelib.Init.Datatypes <> true constr
+binder 2188:2193 <> config:28
+R2234:2245 provenance_extraction <> verify_claim def
+R2247:2252 provenance_extraction <> config:28 var
+R2254:2268 provenance_extraction <> lookup_evidence def
+R2270:2274 provenance_extraction <> claim:27 var
+binder 2224:2229 <> result:29
+R2299:2304 provenance_extraction <> result:29 var
+binder 2285:2291 <> message:30
+R2447:2447 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2454:2455 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2463:2463 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2448:2453 provenance_extraction <> result:29 var
+R2456:2462 provenance_extraction <> message:30 var
+def 2498:2519 <> example_verified_claim
+R2527:2529 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R2523:2526 Corelib.Init.Datatypes <> bool ind
+R2530:2535 Stdlib.Strings.String <> string ind
+R2542:2552 provenance_extraction <> check_claim def
+def 2595:2618 <> example_unverified_claim
+R2626:2628 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R2622:2625 Corelib.Init.Datatypes <> bool ind
+R2629:2634 Stdlib.Strings.String <> string ind
+R2641:2651 provenance_extraction <> check_claim def
+R2761:2764 Corelib.Init.Datatypes <> bool ind
+R2814:2817 Corelib.Init.Datatypes <> list ind
+R2864:2866 Corelib.Init.Datatypes <> nat ind

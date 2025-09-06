@@ -1,0 +1,2 @@
+provenance_proof_simple.vo provenance_proof_simple.glob provenance_proof_simple.v.beautified provenance_proof_simple.required_vo: provenance_proof_simple.v /opt/homebrew/lib/ocaml/rocq-runtime/rocqworker
+provenance_proof_simple.vos provenance_proof_simple.vok provenance_proof_simple.required_vos: provenance_proof_simple.v /opt/homebrew/lib/ocaml/rocq-runtime/rocqworker

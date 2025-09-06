@@ -1,0 +1,220 @@
+name: Test Claude Code MCP Protocol Fix
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-mcp-fix:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install Bun (for Claude Code)
+      run: |
+        curl -fsSL https://bun.sh/install | bash
+        echo "$HOME/.bun/bin" >> $GITHUB_PATH
+        
+    - name: Install Claude Code
+      run: |
+        bun install -g @anthropic-ai/claude-code@latest
+        
+    - name: Verify Claude Code installation
+      run: |
+        claude --version
+        
+    - name: Create test MCP server
+      run: |
+        cat > test-mcp-server.py << 'EOF'
+        #!/usr/bin/env python3
+        """Test MCP server to verify protocolVersion fix"""
+        import json
+        import sys
+        import time
+        
+        def main():
+            print("[CI-TEST] MCP test server starting", file=sys.stderr)
+            
+            try:
+                for line in sys.stdin:
+                    request = json.loads(line.strip())
+                    print(f"[CI-TEST] Received: {request}", file=sys.stderr)
+                    
+                    if request.get("method") == "initialize":
+                        params = request.get("params", {})
+                        protocol_version = params.get("protocolVersion")
+                        
+                        if not protocol_version:
+                            print("[CI-TEST] ❌ BUG: Missing protocolVersion!", file=sys.stderr)
+                            response = {
+                                "jsonrpc": "2.0",
+                                "id": request.get("id"),
+                                "error": {
+                                    "code": -32602,
+                                    "message": "Missing protocolVersion - Claude Code bug confirmed!"
+                                }
+                            }
+                            print("::error::Original Claude Code missing protocolVersion")
+                        else:
+                            print(f"[CI-TEST] ✅ SUCCESS: Found protocolVersion: {protocol_version}", file=sys.stderr)
+                            response = {
+                                "jsonrpc": "2.0",
+                                "id": request.get("id"),
+                                "result": {
+                                    "protocolVersion": "2024-11-05",
+                                    "capabilities": {},
+                                    "serverInfo": {"name": "ci-test-server", "version": "1.0"}
+                                }
+                            }
+                            print("::notice::Fixed Claude Code has protocolVersion")
+                        
+                        print(json.dumps(response))
+                        sys.stdout.flush()
+                        time.sleep(1)  # Allow processing time
+                        break
+                        
+            except Exception as e:
+                print(f"[CI-TEST] Error: {e}", file=sys.stderr)
+        
+        if __name__ == "__main__":
+            main()
+        EOF
+        chmod +x test-mcp-server.py
+        
+    - name: Create MCP configuration for testing
+      run: |
+        mkdir -p ~/.claude
+        cat > test-mcp-config.json << 'EOF'
+        {
+          "mcpServers": {
+            "ci-test-server": {
+              "command": "python3",
+              "args": ["./test-mcp-server.py"],
+              "env": {}
+            }
+          }
+        }
+        EOF
+        
+    - name: Test Original Claude Code (expect failure)
+      id: test-original
+      continue-on-error: true
+      run: |
+        echo "🧪 Testing original Claude Code - should show missing protocolVersion"
+        timeout 30s claude --mcp-config test-mcp-config.json --mcp-debug --version 2>&1 | tee original-output.log
+        
+        # Check if we caught the bug
+        if grep -q "❌ BUG: Missing protocolVersion" original-output.log; then
+          echo "✅ Original Claude Code bug confirmed - missing protocolVersion detected"
+          echo "original_bug_confirmed=true" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️  Could not confirm original bug - may have been patched"
+          echo "original_bug_confirmed=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Install our MCP fix
+      run: |
+        # Copy our fix files
+        cp mcp-fix-v2.js claude-mcp-fix.js
+        chmod +x claude-mcp-fix.js
+        
+        # Modify the fix to use system claude instead of hardcoded path
+        sed -i 's|/Users/jonathanhill/.bun/bin/claude|claude|g' claude-mcp-fix.js
+        sed -i 's|/Users/jonathanhill/.claude/.mcp.json|./test-mcp-config.json|g' claude-mcp-fix.js
+        sed -i 's|/Users/jonathanhill/.claude/settings.json|./test-settings.json|g' claude-mcp-fix.js
+        
+    - name: Test Fixed Claude Code (expect success)  
+      id: test-fixed
+      run: |
+        echo "🧪 Testing fixed Claude Code - should show protocolVersion present"
+        timeout 30s node claude-mcp-fix.js --mcp-config test-mcp-config.json --mcp-debug --version 2>&1 | tee fixed-output.log
+        
+        # Check if fix worked
+        if grep -q "✅ SUCCESS: Found protocolVersion" fixed-output.log; then
+          echo "✅ Fix confirmed - protocolVersion successfully injected"
+          echo "fix_working=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Fix failed - protocolVersion still missing"
+          echo "fix_working=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+        
+        # Check for fix injection messages
+        if grep -q "\[MCP-FIX\]" fixed-output.log; then
+          echo "✅ Fix injection confirmed - wrapper is working"
+          echo "wrapper_working=true" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️  No fix injection messages found"
+          echo "wrapper_working=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Test JSON-RPC Patching Logic
+      run: |
+        echo "🧪 Testing core JSON-RPC patching logic"
+        node test-json-patching.js | tee patching-test.log
+        
+        # Verify patching logic worked
+        if grep -q "✅ JSON-RPC patching logic verified!" patching-test.log; then
+          echo "✅ JSON-RPC patching logic test passed"
+        else
+          echo "❌ JSON-RPC patching logic test failed"
+          exit 1
+        fi
+        
+    - name: Generate test summary
+      run: |
+        echo "## 🧪 Claude Code MCP Fix Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Original Claude Code Test" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.test-original.outputs.original_bug_confirmed }}" = "true" ]; then
+          echo "❌ **Bug Confirmed**: Original Claude Code missing protocolVersion" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️  Original bug detection inconclusive" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Fixed Claude Code Test" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.test-fixed.outputs.fix_working }}" = "true" ]; then
+          echo "✅ **Fix Working**: protocolVersion successfully injected" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Fix failed" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.test-fixed.outputs.wrapper_working }}" = "true" ]; then
+          echo "✅ **Wrapper Active**: MCP-FIX injection confirmed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️  Wrapper injection not detected" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Related GitHub Issues" >> $GITHUB_STEP_SUMMARY
+        echo "This fix addresses:" >> $GITHUB_STEP_SUMMARY
+        echo "- [Issue #1611](https://github.com/anthropics/claude-code/issues/1611)" >> $GITHUB_STEP_SUMMARY
+        echo "- [Issue #768](https://github.com/anthropics/claude-code/issues/768)" >> $GITHUB_STEP_SUMMARY  
+        echo "- [Issue #4793](https://github.com/anthropics/claude-code/issues/4793)" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Upload test outputs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: mcp-test-outputs
+        path: |
+          original-output.log
+          fixed-output.log
+          patching-test.log
+          test-mcp-server.py
+          test-mcp-config.json
+          claude-mcp-fix.js

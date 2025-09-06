@@ -1,0 +1,176 @@
+DIGEST a99744a180865732473d9707b9a0aca8
+FTop.provenance_proof_simple
+R75:78 Stdlib.Bool.Bool <> <> lib
+R80:83 Stdlib.Lists.List <> <> lib
+R85:89 Stdlib.Arith.Arith <> <> lib
+R99:111 Stdlib.Lists.List ListNotations <> mod
+def 143:147 <> Claim
+R152:154 Corelib.Init.Datatypes <> nat ind
+def 168:175 <> Evidence
+R180:182 Corelib.Init.Datatypes <> nat ind
+def 196:205 <> Confidence
+R210:212 Corelib.Init.Datatypes <> nat ind
+rec 263:276 <> EvidenceRecord
+proj 303:309 <> content
+proj 325:332 <> verified
+R313:320 Top.provenance_proof_simple <> Evidence def
+R336:339 Corelib.Init.Datatypes <> bool ind
+def 356:370 <> ProvenanceChain
+R375:378 Corelib.Init.Datatypes <> list ind
+R380:393 Top.provenance_proof_simple <> EvidenceRecord rec
+rec 428:443 <> ProvenanceSystem
+proj 468:478 <> evidence_db
+proj 510:518 <> threshold
+R487:490 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R482:486 Top.provenance_proof_simple <> Claim def
+R491:505 Top.provenance_proof_simple <> ProvenanceChain def
+R522:531 Top.provenance_proof_simple <> Confidence def
+def 588:599 <> all_verified
+R610:624 Top.provenance_proof_simple <> ProvenanceChain def
+binder 602:606 <> chain:7
+R629:632 Corelib.Init.Datatypes <> bool ind
+R639:645 Stdlib.Lists.List <> forallb def
+R669:673 Top.provenance_proof_simple <> chain:7 var
+binder 652:652 <> e:8
+R657:664 Top.provenance_proof_simple <> verified proj
+R666:666 Top.provenance_proof_simple <> e:8 var
+def 735:746 <> has_evidence
+R757:771 Top.provenance_proof_simple <> ProvenanceChain def
+binder 749:753 <> chain:9
+R776:779 Corelib.Init.Datatypes <> bool ind
+R792:796 Top.provenance_proof_simple <> chain:9 var
+R807:808 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R813:817 Corelib.Init.Datatypes <> false constr
+R828:831 Corelib.Init.Datatypes <> true constr
+def 881:895 <> calc_confidence
+R906:920 Top.provenance_proof_simple <> ProvenanceChain def
+binder 898:902 <> chain:11
+R925:934 Top.provenance_proof_simple <> Confidence def
+R963:968 Corelib.Init.Datatypes <> length def
+R971:976 Stdlib.Lists.List <> filter def
+R1000:1004 Top.provenance_proof_simple <> chain:11 var
+binder 983:983 <> e:12
+R988:995 Top.provenance_proof_simple <> verified proj
+R997:997 Top.provenance_proof_simple <> e:12 var
+binder 945:958 <> verified_count:13
+R1031:1036 Corelib.Init.Datatypes <> length def
+R1038:1042 Top.provenance_proof_simple <> chain:11 var
+binder 1016:1026 <> total_count:14
+R1052:1058 Stdlib.Arith.PeanoNat Nat eqb def
+R1060:1070 Top.provenance_proof_simple <> total_count:14 var
+R1089:1095 Stdlib.Arith.PeanoNat Nat div def
+R1112:1114 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R1098:1111 Top.provenance_proof_simple <> verified_count:13 var
+R1120:1130 Top.provenance_proof_simple <> total_count:14 var
+def 1181:1199 <> sufficient_evidence
+R1208:1223 Top.provenance_proof_simple <> ProvenanceSystem rec
+binder 1202:1204 <> sys:15
+R1235:1249 Top.provenance_proof_simple <> ProvenanceChain def
+binder 1227:1231 <> chain:16
+R1254:1257 Corelib.Init.Datatypes <> bool ind
+R1276:1290 Top.provenance_proof_simple <> calc_confidence def
+R1292:1296 Top.provenance_proof_simple <> chain:16 var
+binder 1268:1271 <> conf:17
+R1303:1306 Corelib.Init.Datatypes <> andb def
+R1330:1336 Stdlib.Arith.PeanoNat Nat leb def
+R1339:1347 Top.provenance_proof_simple <> threshold proj
+R1349:1351 Top.provenance_proof_simple <> sys:15 var
+R1354:1357 Top.provenance_proof_simple <> conf:17 var
+R1309:1320 Top.provenance_proof_simple <> all_verified def
+R1322:1326 Top.provenance_proof_simple <> chain:16 var
+def 1404:1413 <> assertable
+R1422:1437 Top.provenance_proof_simple <> ProvenanceSystem rec
+binder 1416:1418 <> sys:18
+R1445:1449 Top.provenance_proof_simple <> Claim def
+binder 1441:1441 <> c:19
+R1454:1457 Corelib.Init.Datatypes <> bool ind
+R1477:1487 Top.provenance_proof_simple <> evidence_db proj
+R1489:1491 Top.provenance_proof_simple <> sys:18 var
+R1493:1493 Top.provenance_proof_simple <> c:19 var
+binder 1468:1472 <> chain:20
+R1500:1503 Corelib.Init.Datatypes <> andb def
+R1527:1545 Top.provenance_proof_simple <> sufficient_evidence def
+R1547:1549 Top.provenance_proof_simple <> sys:18 var
+R1551:1555 Top.provenance_proof_simple <> chain:20 var
+R1506:1517 Top.provenance_proof_simple <> has_evidence def
+R1519:1523 Top.provenance_proof_simple <> chain:20 var
+prf 1648:1659 <> claim_safety
+R1679:1694 Top.provenance_proof_simple <> ProvenanceSystem rec
+binder 1673:1675 <> sys:21
+R1702:1706 Top.provenance_proof_simple <> Claim def
+binder 1698:1698 <> c:22
+R1737:1744 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1730:1732 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1714:1723 Top.provenance_proof_simple <> assertable def
+R1725:1727 Top.provenance_proof_simple <> sys:21 var
+R1729:1729 Top.provenance_proof_simple <> c:22 var
+R1733:1736 Corelib.Init.Datatypes <> true constr
+R1777:1779 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1745:1756 Top.provenance_proof_simple <> all_verified def
+R1759:1769 Top.provenance_proof_simple <> evidence_db proj
+R1771:1773 Top.provenance_proof_simple <> sys:21 var
+R1775:1775 Top.provenance_proof_simple <> c:22 var
+R1780:1783 Corelib.Init.Datatypes <> true constr
+R1831:1840 Top.provenance_proof_simple <> assertable def
+R1867:1879 Stdlib.Bool.Bool <> andb_true_iff thm
+R1867:1879 Stdlib.Bool.Bool <> andb_true_iff thm
+R1968:1986 Top.provenance_proof_simple <> sufficient_evidence def
+R2013:2025 Stdlib.Bool.Bool <> andb_true_iff thm
+R2013:2025 Stdlib.Bool.Bool <> andb_true_iff thm
+prf 2183:2206 <> no_unverified_assertions
+R2226:2241 Top.provenance_proof_simple <> ProvenanceSystem rec
+binder 2220:2222 <> sys:23
+R2249:2253 Top.provenance_proof_simple <> Claim def
+binder 2245:2245 <> c:24
+R2301:2308 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2293:2295 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2261:2272 Top.provenance_proof_simple <> all_verified def
+R2275:2285 Top.provenance_proof_simple <> evidence_db proj
+R2287:2289 Top.provenance_proof_simple <> sys:23 var
+R2291:2291 Top.provenance_proof_simple <> c:24 var
+R2296:2300 Corelib.Init.Datatypes <> false constr
+R2325:2327 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2309:2318 Top.provenance_proof_simple <> assertable def
+R2320:2322 Top.provenance_proof_simple <> sys:23 var
+R2324:2324 Top.provenance_proof_simple <> c:24 var
+R2328:2332 Corelib.Init.Datatypes <> false constr
+R2380:2389 Top.provenance_proof_simple <> assertable def
+R2407:2418 Top.provenance_proof_simple <> has_evidence def
+R2421:2431 Top.provenance_proof_simple <> evidence_db proj
+R2407:2418 Top.provenance_proof_simple <> has_evidence def
+R2421:2431 Top.provenance_proof_simple <> evidence_db proj
+R2514:2532 Top.provenance_proof_simple <> sufficient_evidence def
+prf 2712:2731 <> evidence_requirement
+R2751:2766 Top.provenance_proof_simple <> ProvenanceSystem rec
+binder 2745:2747 <> sys:25
+R2774:2778 Top.provenance_proof_simple <> Claim def
+binder 2770:2770 <> c:26
+R2809:2816 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2802:2804 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2786:2795 Top.provenance_proof_simple <> assertable def
+R2797:2799 Top.provenance_proof_simple <> sys:25 var
+R2801:2801 Top.provenance_proof_simple <> c:26 var
+R2805:2808 Corelib.Init.Datatypes <> true constr
+R2817:2823 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R2842:2849 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R2828:2841 Top.provenance_proof_simple <> EvidenceRecord rec
+binder 2824:2824 <> e:27
+R2874:2877 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R2850:2851 Stdlib.Lists.List <> In def
+R2856:2866 Top.provenance_proof_simple <> evidence_db proj
+R2868:2870 Top.provenance_proof_simple <> sys:25 var
+R2872:2872 Top.provenance_proof_simple <> c:26 var
+R2853:2853 Top.provenance_proof_simple <> e:27 var
+R2888:2890 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2878:2885 Top.provenance_proof_simple <> verified proj
+R2887:2887 Top.provenance_proof_simple <> e:27 var
+R2891:2894 Corelib.Init.Datatypes <> true constr
+R2983:2992 Top.provenance_proof_simple <> assertable def
+R3019:3031 Stdlib.Bool.Bool <> andb_true_iff thm
+R3019:3031 Stdlib.Bool.Bool <> andb_true_iff thm
+R3166:3184 Top.provenance_proof_simple <> sufficient_evidence def
+R3211:3223 Stdlib.Bool.Bool <> andb_true_iff thm
+R3211:3223 Stdlib.Bool.Bool <> andb_true_iff thm
+R3366:3377 Top.provenance_proof_simple <> has_evidence def
+R3410:3420 Top.provenance_proof_simple <> evidence_db proj
+R3410:3420 Top.provenance_proof_simple <> evidence_db proj
