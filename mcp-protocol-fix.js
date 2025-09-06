@@ -53,7 +53,7 @@ const originalSpawn = require('child_process').spawn;
 require('child_process').spawn = function(command, args, options) {
     const child = originalSpawn.apply(this, arguments);
     
-    if (options && options.stdio && child.stdin && child.stdout) {
+    if (child && child.stdin && typeof child.stdin.write === 'function') {
         const originalWrite = child.stdin.write;
         
         child.stdin.write = function(data, encoding, callback) {
