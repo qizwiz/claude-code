@@ -105,13 +105,15 @@ require('child_process').spawn = function(command, args, options) {
 `;
 
 // Write wrapper to temp file
-const wrapperPath = '/tmp/claude-mcp-wrapper.js';
-fs.writeFileSync(wrapperPath, wrapperCode);
+const os = require('os');
+const path = require('path');
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-mcp-wrapper-'));
+const wrapperPath = path.join(tmpDir, 'index.js');
+fs.writeFileSync(wrapperPath, wrapperCode, { mode: 0o600 });
 
 // Set Node options to load our wrapper
-const env = { ...process.env };
-env.NODE_OPTIONS = `--require=${wrapperPath} ${env.NODE_OPTIONS || ''}`;
-
+const env = { ...process.env, CLAUDE_MCP_WRAPPER_ACTIVE: '1' };
+env.NODE_OPTIONS = [`--require=${wrapperPath}`, env.NODE_OPTIONS].filter(Boolean).join(' ');
 // Launch Claude Code with the wrapper
 try {
     const result = execSync(`claude ${process.argv.slice(2).join(' ')}`, {
