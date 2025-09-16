@@ -69,6 +69,26 @@ async function triggerDedupeWorkflow(
   );
 }
 
+/**
+ * Scans repository issues within a numeric range and triggers the Claude dedupe workflow for issues
+ * that do not already have a duplicate-detection comment.
+ *
+ * This function:
+ * - Requires GITHUB_TOKEN in the environment (throws if missing) and reads other env vars:
+ *   - DRY_RUN (default: true) — set to "false" to actually dispatch workflows.
+ *   - MAX_ISSUE_NUMBER (default: 4050) — process issues with number < this value.
+ *   - MIN_ISSUE_NUMBER (default: 1) — process issues with number >= this value.
+ * - Paginates repository issues (sorted by creation date, newest first), collects issues whose
+ *   numbers fall in [MIN_ISSUE_NUMBER, MAX_ISSUE_NUMBER), and for each issue:
+ *   - Fetches comments and skips the issue if a bot-created duplicate-detection comment exists.
+ *   - Otherwise, invokes the dedupe workflow dispatcher (or logs a dry-run message).
+ * - Waits ~1 second between workflow triggers and enforces a page limit to avoid endless pagination.
+ *
+ * Side effects:
+ * - May dispatch GitHub Actions workflows for matching issues (unless DRY_RUN is not "false").
+ *
+ * @throws Error If the GITHUB_TOKEN environment variable is not set.
+ */
 async function backfillDuplicateComments(): Promise<void> {
   console.log("[DEBUG] Starting backfill duplicate comments script");
 

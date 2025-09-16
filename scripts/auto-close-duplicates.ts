@@ -25,6 +25,21 @@ interface GitHubReaction {
   content: string;
 }
 
+/**
+ * Perform an authenticated HTTP request to the GitHub REST API and return the parsed JSON response.
+ *
+ * Builds a request to `https://api.github.com${endpoint}` using the given HTTP method, includes
+ * an Authorization Bearer token, the GitHub v3 Accept header and a `User-Agent`. If a request
+ * body is provided it is JSON-stringified and `Content-Type: application/json` is set.
+ *
+ * @param endpoint - API path and query (e.g. `/repos/:owner/:repo/issues`)
+ * @param token - Personal access token or GitHub App installation token used for Authorization
+ * @param method - HTTP method to use (defaults to `GET`)
+ * @param body - Optional request payload that will be JSON-serialized when present
+ * @returns The parsed JSON response typed as `T`
+ *
+ * @throws Error if the HTTP response status is not OK
+ */
 async function githubRequest<T>(endpoint: string, token: string, method: string = 'GET', body?: any): Promise<T> {
   const response = await fetch(`https://api.github.com${endpoint}`, {
     method,
@@ -46,6 +61,16 @@ async function githubRequest<T>(endpoint: string, token: string, method: string 
   return response.json();
 }
 
+/**
+ * Extracts a referenced duplicate issue number from a comment body.
+ *
+ * Checks for two common reference formats and returns the issue number if found:
+ * 1. Local shorthand: `#123`
+ * 2. Full GitHub issue URL: `github.com/owner/repo/issues/123`
+ *
+ * @param commentBody - The comment text to search for an issue reference.
+ * @returns The referenced issue number, or `null` if no match is found.
+ */
 function extractDuplicateIssueNumber(commentBody: string): number | null {
   // Try to match #123 format first
   let match = commentBody.match(/#(\d+)/);
